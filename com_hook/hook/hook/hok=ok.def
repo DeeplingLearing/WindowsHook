@@ -1,0 +1,5 @@
+LIBRARY hook
+EXPORTS
+CallWndProc @ 1
+GetMsgProc @2
+KeyboardProc @3
