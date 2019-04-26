@@ -1,77 +1,53 @@
-// dllmain.cpp : ���� DLL Ӧ�ó������ڵ㡣
+﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "stdafx.h"
 
-//#pragma comment(linker, "/export:CallWndProc=CallWndProc")
+#define UM_CALLWNDPROC WM_USER + 110 //自定义消息
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-					 )
+#pragma data_seg("MySection")
+DWORD g_threadId = 0; //共享启动钩子的线程ID 只能由启动线程设置 其他进程向该线程发送消息.
+#pragma data_seg()
+
+#pragma comment(linker, "/SECTION:MySection,RWS") //设置共享数据段可读可写.
+
+BOOL APIENTRY DllMain(HMODULE hModule,
+                      DWORD  ul_reason_for_call,
+                      LPVOID lpReserved
+)
 {
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-	return TRUE;
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
 
+__declspec(dllexport) void __stdcall SetThreadId(DWORD tID)
+{
+    g_threadId = tID;
+}
 
 __declspec(dllexport) LRESULT CALLBACK CallWndProc(int code, WPARAM wParam, LPARAM lParam)
 {
-	OutputDebugStringW(L"CallWndProc\n");
+    DWORD tId = (DWORD)(wParam);
+    LPCWPSTRUCT lpcw = (LPCWPSTRUCT)(lParam);
 
-	DWORD tId = (DWORD)(wParam);
-	LPCWPSTRUCT lpcw = (LPCWPSTRUCT)(lParam);
+    if (lpcw)
+    {
+        HWND hwnd = lpcw->hwnd;
+        UINT msg = lpcw->message;
+        if (WM_SHOWWINDOW == msg || WM_CLOSE == msg || WM_ACTIVATE == msg)
+        {
+            wchar_t buf[1024] = { 0 };
+            wsprintfW(buf, L"threadID:%d\t hwnd:%d\n", g_threadId, hwnd);
+            OutputDebugStringW(buf);
+            PostThreadMessageW(g_threadId, UM_CALLWNDPROC, wParam, (WPARAM)(hwnd));
+            OutputDebugStringW(L"PostThreadMessageW end\n");
+        }
+    }
 
-	
-	if (lpcw)
-	{
-		wchar_t buf[1024] = { 0 };
-
-		HWND hwnd = lpcw->hwnd;
-		UINT msg = lpcw->message;
-
-		wchar_t className[1024] = { 0 }, titleName[1024] = { 0 };
-
-		GetClassNameW(hwnd, className, 1024);
-		GetWindowTextW(hwnd, titleName, 1024);
-
-		wsprintf(buf, L"tId:%d\t hwnd:%d\t message:%d class name:%s\t title name:%s\n", tId, hwnd, msg, className, titleName);
-
-		OutputDebugStringW(buf);
-	}
-
-	return CallNextHookEx(NULL, code, wParam, lParam);
-}
-
-
-__declspec(dllexport) LRESULT CALLBACK GetMsgProc(int code, WPARAM wParam, LPARAM lParam)
-{
-	OutputDebugStringW(L"GetMsgProc\n");
-
-	LPMSG lpMsg = (LPMSG)(lParam);
-
-	if (lpMsg)
-	{
-		wchar_t buf[1024] = { 0 };
-		HWND hwnd = lpMsg->hwnd;
-		UINT msg = lpMsg->message;
-
-		wsprintf(buf, L"hwnd:%d\t message:%d\n", hwnd, msg);
-
-		OutputDebugStringW(buf);
-	}
-
-	return CallNextHookEx(NULL, code, wParam, lParam);
-}
-
-__declspec(dllexport) LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
-{
-	OutputDebugStringW(L"KeyboardProc\n");
-
-	return CallNextHookEx(NULL, code, wParam, lParam);
+    return CallNextHookEx(NULL, code, wParam, lParam);
 }
