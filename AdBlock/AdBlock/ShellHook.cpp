@@ -1,4 +1,4 @@
-#include "ShellHook.h"
+ï»¿#include "ShellHook.h"
 
 static void GetCreateWndParamter(HWND hwndNew)
 {
@@ -20,9 +20,9 @@ static void GetCreateWndParamter(HWND hwndNew)
 		ShellHook::_callback(wp);
 	}
 	std::wostringstream os;
-	os << L"ÐÂ´´½¨µÄ´°¿Ú¾ä±ú:" << hwndNew << L"\t´°¿ÚÀàÃû:" << className << L"\t´°¿Ú±êÌâ:" << text << L"\t¿É¼û:" << isVisibe 
-	   << L"\t´°¿Ú×ø±ê:(" << wi.rcWindow.left << L", " << wi.rcWindow.top << L")" 
-	   << L"\t´°¿Ú´óÐ¡:(" << (wi.rcWindow.right - wi.rcWindow.left)<< L", " << (wi.rcWindow.bottom - wi.rcWindow.top) << L")" << L"\n";
+	os << L"æ–°åˆ›å»ºçš„çª—å£å¥æŸ„:" << hwndNew << L"\tçª—å£ç±»å:" << className << L"\tçª—å£æ ‡é¢˜:" << text << L"\tå¯è§:" << isVisibe 
+	   << L"\tçª—å£åæ ‡:(" << wi.rcWindow.left << L", " << wi.rcWindow.top << L")" 
+	   << L"\tçª—å£å¤§å°:(" << (wi.rcWindow.right - wi.rcWindow.left)<< L", " << (wi.rcWindow.bottom - wi.rcWindow.top) << L")" << L"\n";
 	OutputDebugStringW(os.str().c_str());
 }
 
@@ -71,18 +71,18 @@ bool ShellHook::SetShellHook(HINSTANCE hInstance)
 
 	if (!_hwndHook)
 	{
-		OutputDebugStringW(L"´´½¨°²×°¹³×Ó´°¿ÚÊ§°Ü!");
+		OutputDebugStringW(L"åˆ›å»ºå®‰è£…é’©å­çª—å£å¤±è´¥!");
 		return false;
 	}
 
 	WM_SHELLHOOKMESSAGE = RegisterWindowMessage(L"SHELLHOOK");
 
-	return WM_SHELLHOOKMESSAGE && RegisterShellHookWindow(_hwndHook);
+	return RegisterShellHookWindow(_hwndHook);
 }
 
 void ShellHook::UnSetShellHook()
 {
 	BOOL ret = DeregisterShellHookWindow(_hwndHook);
 
-	OutputDebugStringW(ret ? L"Ð¶ÔØ¹³×Ó³É¹¦!" : L"Ð¶ÔØ¹³×ÓÊ§°Ü!");
+	OutputDebugStringW(ret ? L"å¸è½½é’©å­æˆåŠŸ!" : L"å¸è½½é’©å­å¤±è´¥!");
 }

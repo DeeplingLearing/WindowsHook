@@ -1,108 +1,112 @@
-#include "AdModel.h"
-
+ï»¿#include "AdModel.h"
 
 AdModel::AdModel()
-	: _state(MonitorState::STOP)
+    : _state(MonitorState::STOP)
 {
-	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	Gdiplus::GdiplusStartup(&_gdiplusToken, &gdiplusStartupInput, NULL);
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    Gdiplus::GdiplusStartup(&_gdiplusToken, &gdiplusStartupInput, NULL);
 }
-
 
 AdModel::~AdModel()
 {
-	if (_adMonitor.joinable())
-	{
-		_adMonitor.join();
-	}
+    if (_adMonitor.joinable())
+    {
+        _adMonitor.join();
+    }
 
-	Gdiplus::GdiplusShutdown(_gdiplusToken);
+    Gdiplus::GdiplusShutdown(_gdiplusToken);
 }
 
 void AdModel::Start()
 {
-	//¼ÓÔØºÚ°×Ãûµ¥
-	//LoadBlackAndWhiteList();
-	//Çå³ıÆô¶¯Æ÷Æô¶¯Ç°µÄ¹ã¸æ´°¿Ú
-	ClearAdWindows();
+    //åŠ è½½é»‘ç™½åå•
+    //LoadBlackAndWhiteList();
+    //æ¸…é™¤å¯åŠ¨å™¨å¯åŠ¨å‰çš„å¹¿å‘Šçª—å£
+    ClearAdWindows();
 
-	//Æô¶¯×ÀÃæ´°¿Ú¼àÊÓÆ÷
-	HINSTANCE hInstance = GetModuleHandleW(NULL);
-	_adMonitor = std::thread(std::bind(&AdModel::SetupAdMonitor, this, hInstance));
+    //å¯åŠ¨æ¡Œé¢çª—å£ç›‘è§†å™¨
+    HINSTANCE hInstance = GetModuleHandleW(NULL);
+    _adMonitor = std::thread(std::bind(&AdModel::SetupAdMonitor, this, hInstance));
 }
 
 void AdModel::SetAdMonitorState(const MonitorState & state)
 {
-	std::lock_guard<std::mutex> lock(_stateMutex);
-	_state = state;
+    std::lock_guard<std::mutex> lock(_stateMutex);
+    _state = state;
 }
 
 void AdModel::ClearAdWindows()
 {
-	//Ã¶¾ÙEnumWindowsÎª×èÈûº¯Êı
-	EnumAdWindowsTool::SetCallback(std::bind(&AdModel::EnumTopLevelWindows, this, std::placeholders::_1));
-	EnumAdWindowsTool::EnumTopLevelWindows();
+    //æšä¸¾EnumWindowsä¸ºé˜»å¡å‡½æ•°
+    EnumAdWindowsTool::SetCallback(std::bind(&AdModel::EnumTopLevelWindows, this, std::placeholders::_1));
+    EnumAdWindowsTool::EnumTopLevelWindows();
 }
 
 void AdModel::HandleWindows(const WndParamter & wp)
 {
-	//1¡¢ÊÇ·ñÔÚ°×Ãûµ¥ÖĞ
+    //1ã€æ˜¯å¦åœ¨ç™½åå•ä¸­
 
-	//2¡¢ÊÇ·ñÔÚºÚÃûµ¥ÖĞ
+    //2ã€æ˜¯å¦åœ¨é»‘åå•ä¸­
 
-	//3¡¢ÅĞ¶Ï´°¿ÚÊÇ·ñÎª¿ÉÒÉ´°¿Ú
+    //3ã€åˆ¤æ–­çª—å£æ˜¯å¦ä¸ºå¯ç–‘çª—å£
 }
 
 void AdModel::GetCreateWindowsParamter(const WndParamter & wp)
 {
-	//ÅĞ¶Ï´°¿ÚÊÇ·ñĞèÒªÀ¹½Ø
-	HandleWindows(wp);
+    //åˆ¤æ–­çª—å£æ˜¯å¦éœ€è¦æ‹¦æˆª
+    HandleWindows(wp);
 
+    wchar_t debug[1024] = { 0 };
+
+    wsprintfW(debug, L"hwnd:%d\tclass:%s\ttitle:%s\tret:(%d, %d, %d, %d)\n", wp._hwnd, wp._class.c_str(), wp._text.c_str(), wp._rect.left, wp._rect.top, wp._rect.right, wp._rect.bottom);
+    OutputDebugStringW(debug);
 }
 
 void AdModel::EnumTopLevelWindows(const WndParamter & wp)
 {
-	//ÅĞ¶Ï´°¿ÚÊÇ·ñĞèÒªÀ¹½Ø
-	HandleWindows(wp);
+    //åˆ¤æ–­çª—å£æ˜¯å¦éœ€è¦æ‹¦æˆª
+    HandleWindows(wp);
+    wchar_t debug[1024] = { 0 };
+    wsprintfW(debug, L"hwnd:%d\tclass:%s\ttitle:%s\tret:(%d, %d, %d, %d)\n", wp._hwnd, wp._class.c_str(), wp._text.c_str(), wp._rect.left, wp._rect.top, wp._rect.right, wp._rect.bottom);
+    OutputDebugStringW(debug);
 }
 
 void AdModel::SetupAdMonitor(HINSTANCE hInstance)
 {
-	if (MonitorState::STOP != _state)
-	{
-		OutputDebugStringW(L"¹ã¸æ¼àÊÓÆ÷ÒÑ¾­¿ªÆô!");
-		return;
-	}
+    if (MonitorState::STOP != _state)
+    {
+        OutputDebugStringW(L"å¹¿å‘Šç›‘è§†å™¨å·²ç»å¼€å¯!");
+        return;
+    }
 
-	ShellHook shellHook;
-	if (!shellHook.SetShellHook(hInstance))
-	{
-		OutputDebugStringW(L"°²×°¹³×ÓÊ§°Ü!");
-		return;
-	}
-	
-	shellHook._callback = std::bind(&AdModel::GetCreateWindowsParamter, this, std::placeholders::_1);
+    ShellHook shellHook;
+    if (!shellHook.SetShellHook(hInstance))
+    {
+        OutputDebugStringW(L"å®‰è£…é’©å­å¤±è´¥!");
+        return;
+    }
 
-	_state = MonitorState::START;
+    shellHook._callback = std::bind(&AdModel::GetCreateWindowsParamter, this, std::placeholders::_1);
 
-	MSG msg;
-	while (GetMessageW(&msg, NULL, 0, 0)) //ÕâÀïÊÇ×èÈûµÄ£¬µÈÓĞ´°¿ÚÏûÏ¢µÄÊ±ºò²Å»á·µ»Ø
-	{
-		if (MonitorState::RUNNING == _state)
-		{
-			//¿ªÆôÀ¹½Ø
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		else if (MonitorState::START == _state || MonitorState::SUSPEND == _state)
-		{
-			//¿ªÆôÀ¹½ØÆ÷µ«ÊÇÎ´¿ªÆôÀ¹½Ø»òÔİÍ£À¹½Ø
+    _state = MonitorState::RUNNING;
 
-		}
-		else
-		{
-			//¹Ø±Õ¹ã¸æµ¯³öÀ¹½ØÆ÷
-			break;
-		}
-	}
+    MSG msg;
+    while (GetMessageW(&msg, NULL, 0, 0)) //è¿™é‡Œæ˜¯é˜»å¡çš„ï¼Œç­‰æœ‰çª—å£æ¶ˆæ¯çš„æ—¶å€™æ‰ä¼šè¿”å›
+    {
+        if (MonitorState::RUNNING == _state)
+        {
+            //å¼€å¯æ‹¦æˆª
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        else if (MonitorState::START == _state || MonitorState::SUSPEND == _state)
+        {
+            //å¼€å¯æ‹¦æˆªå™¨ä½†æ˜¯æœªå¼€å¯æ‹¦æˆªæˆ–æš‚åœæ‹¦æˆª
+        }
+        else
+        {
+            //å…³é—­å¹¿å‘Šå¼¹å‡ºæ‹¦æˆªå™¨
+            break;
+        }
+    }
 }

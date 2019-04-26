@@ -1,68 +1,65 @@
-#include "EnumAdWindowsTool.h"
+ï»¿#include "EnumAdWindowsTool.h"
 
-
-
-EnumTopLevelWindowsCallback EnumAdWindowsTool::_callback = nullptr; //³õÊ¼»¯¾²Ì¬³ÉÔ±±äÁ¿
+EnumTopLevelWindowsCallback EnumAdWindowsTool::_callback = nullptr; //åˆå§‹åŒ–é™æ€æˆå‘˜å˜é‡
 
 static BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-	if (!IsWindowVisible(hwnd))
-	{
-		OutputDebugStringW(L"EnumWindowsProc: windows is not visible!\n");
-		return TRUE; //¼ÌĞøÃ¶¾Ù
-	}
+    if (!IsWindowVisible(hwnd))
+    {
+        OutputDebugStringW(L"EnumWindowsProc: windows is not visible!\n");
+        return TRUE; //ç»§ç»­æšä¸¾
+    }
 
-	WndParamter wp = EnumAdWindowsTool::GetWindowParamter(hwnd);
+    WndParamter wp = EnumAdWindowsTool::GetWindowParamter(hwnd);
 
-	std::wostringstream os;
-	os << L"ĞÂ´´½¨µÄ´°¿Ú¾ä±ú:" << wp._hwnd << L"\t´°¿ÚÀàÃû:" << wp._class << L"\t´°¿Ú±êÌâ:" << wp._text << L"\t¿É¼û:"<< L"\t´°¿Ú×ø±ê:(" << wp._rect.left 
-	   << L", " << wp._rect.top << L")" << L"\t´°¿Ú´óĞ¡:(" << (wp._rect.right - wp._rect.left) << L", " << (wp._rect.bottom - wp._rect.top) << L")" << L"\n";
+    std::wostringstream os;
+    os << L"æ–°åˆ›å»ºçš„çª—å£å¥æŸ„:" << wp._hwnd << L"\tçª—å£ç±»å:" << wp._class << L"\tçª—å£æ ‡é¢˜:" << wp._text << L"\tå¯è§:" << L"\tçª—å£åæ ‡:(" << wp._rect.left
+        << L", " << wp._rect.top << L")" << L"\tçª—å£å¤§å°:(" << (wp._rect.right - wp._rect.left) << L", " << (wp._rect.bottom - wp._rect.top) << L")" << L"\n";
 
-	if (wp._class.empty() && wp._text.empty())
-	{
-		std::wstring str = L"classname and text both are empty!\t";
-		str += os.str();
-		OutputDebugStringW(str.c_str());
-		return TRUE;
-	}
-	
-	//¼ÆËã¶¥¼¶´°¿ÚÔÚ×ÀÃæµÄÎ»ÖÃ
-	int width = wp._rect.right - wp._rect.left;
-	int height = wp._rect.bottom - wp._rect.top;
+    if (wp._class.empty() && wp._text.empty())
+    {
+        std::wstring str = L"classname and text both are empty!\t";
+        str += os.str();
+        OutputDebugStringW(str.c_str());
+        return TRUE;
+    }
 
-	if (width <= 0 || height <= 0)
-	{
-		//´°¿Ú¿í¸ßÓĞ¸öÒ»Îª0 ÔÚ×ÀÃæÉÏ¿´²»¼ûµÄ ¿ÉÒÔ¹ıÂËµô
-		std::wstring str = L"´°¿Ú¿í»ò¸ßÎªÁã!\t";
-		str += os.str();
-		OutputDebugStringW(str.c_str());
-		return TRUE;
-	}
+    //è®¡ç®—é¡¶çº§çª—å£åœ¨æ¡Œé¢çš„ä½ç½®
+    int width = wp._rect.right - wp._rect.left;
+    int height = wp._rect.bottom - wp._rect.top;
 
-	int cx = GetSystemMetrics(SM_CXSCREEN);
-	int cy = GetSystemMetrics(SM_CYSCREEN);
+    if (width <= 0 || height <= 0)
+    {
+        //çª—å£å®½é«˜æœ‰ä¸ªä¸€ä¸º0 åœ¨æ¡Œé¢ä¸Šçœ‹ä¸è§çš„ å¯ä»¥è¿‡æ»¤æ‰
+        std::wstring str = L"çª—å£å®½æˆ–é«˜ä¸ºé›¶!\t";
+        str += os.str();
+        OutputDebugStringW(str.c_str());
+        return TRUE;
+    }
 
-	if (wp._rect.right <= 0 || wp._rect.left > cx || wp._rect.bottom <= 0 || wp._rect.top >= cy)
-	{
-		//´°¿Ú²»ÔÚ×ÀÃæ·¶Î§ÄÚ ¹ıÂËµô
-		std::wstring str = L"´°¿Ú²»ÔÚ×ÀÃæ·¶Î§ÄÚ!\t";
-		str += os.str();
-		OutputDebugStringW(str.c_str());
-		return TRUE;
-	}
+    int cx = GetSystemMetrics(SM_CXSCREEN);
+    int cy = GetSystemMetrics(SM_CYSCREEN);
 
-	if (EnumAdWindowsTool::_callback)
-	{
-		EnumAdWindowsTool::_callback(wp);
-	}
+    if (wp._rect.right <= 0 || wp._rect.left > cx || wp._rect.bottom <= 0 || wp._rect.top >= cy)
+    {
+        //çª—å£ä¸åœ¨æ¡Œé¢èŒƒå›´å†… è¿‡æ»¤æ‰
+        std::wstring str = L"çª—å£ä¸åœ¨æ¡Œé¢èŒƒå›´å†…!\t";
+        str += os.str();
+        OutputDebugStringW(str.c_str());
+        return TRUE;
+    }
 
-	return TRUE;
+    if (EnumAdWindowsTool::_callback)
+    {
+        EnumAdWindowsTool::_callback(wp);
+    }
+
+    return TRUE;
 }
 
 EnumAdWindowsTool::EnumAdWindowsTool()
 {
 }
-
 
 EnumAdWindowsTool::~EnumAdWindowsTool()
 {
@@ -70,35 +67,35 @@ EnumAdWindowsTool::~EnumAdWindowsTool()
 
 void EnumAdWindowsTool::SetCallback(const EnumTopLevelWindowsCallback & callback)
 {
-	assert(callback);
+    assert(callback);
 
-	_callback = callback;
+    _callback = callback;
 }
 
 void EnumAdWindowsTool::EnumTopLevelWindows()
 {
-	EnumWindows(EnumWindowsProc, NULL);
+    EnumWindows(EnumWindowsProc, NULL);
 }
 
 WndParamter EnumAdWindowsTool::GetWindowParamter(HWND hwnd)
 {
-	WndParamter wp;
-	wp._hwnd = hwnd;
-	wchar_t szClass[1024] = { 0 }, szText[1024] = { 0 };
-	GetClassNameW(hwnd, szClass, 1024);
-	GetWindowTextW(hwnd, szText, 1024);
-	wp._class = std::wstring(szClass);
-	wp._text = std::wstring(szText);
-	WINDOWINFO wi;
-	GetWindowInfo(hwnd, &wi);
-	wp._rect = wi.rcWindow;
+    WndParamter wp;
+    wp._hwnd = hwnd;
+    wchar_t szClass[1024] = { 0 }, szText[1024] = { 0 };
+    GetClassNameW(hwnd, szClass, 1024);
+    GetWindowTextW(hwnd, szText, 1024);
+    wp._class = std::wstring(szClass);
+    wp._text = std::wstring(szText);
+    WINDOWINFO wi;
+    GetWindowInfo(hwnd, &wi);
+    wp._rect = wi.rcWindow;
 
-	return wp;
+    return wp;
 }
 
 bool EnumAdWindowsTool::CaputureWindows(HWND hwnd, std::wstring filename)
 {
-	return false;
+    return false;
 }
 
 void EnumAdWindowsTool::CloseWindows(HWND hwnd)

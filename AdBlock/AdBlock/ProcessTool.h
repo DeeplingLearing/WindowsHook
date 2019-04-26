@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-//进程处理工具类
+//进程处理工具类 zeus已经有该方法
 
 class ProcessTool
 {

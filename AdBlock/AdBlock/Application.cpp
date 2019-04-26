@@ -1,4 +1,4 @@
-#include "Application.h"
+﻿#include "Application.h"
 
 
 
@@ -15,4 +15,6 @@ Application::~Application()
 void Application::run()
 {
 	_adModel->Start();
+
+    _adModel->SetAdMonitorState(MonitorState::RUNNING);
 }
